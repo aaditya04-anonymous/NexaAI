@@ -6,13 +6,16 @@ from fastapi.responses import JSONResponse
 from .api.routes import router
 from .core.config import get_settings
 from .db.database import database
+from .workers.scheduler import scheduler
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     await database.connect()
+    scheduler.start(database.db)
     yield
+    scheduler.stop()
     await database.close()
 
 settings = get_settings()
