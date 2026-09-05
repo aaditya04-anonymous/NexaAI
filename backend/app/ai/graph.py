@@ -32,9 +32,9 @@ def answer(state: AgentState) -> AgentState:
     profile = context.get("profile", {})
     safe_profile = {key: value for key, value in profile.items() if key in {"name", "career_field", "target_career", "skills", "interests", "communication_style"}}
     prompt = ("You are Nexa, a supportive personal growth AI. You are an AI, not a person. "
-              "Use only supplied user context for claims about the user. State uncertainty plainly; do not fabricate progress, sources, or document content. "
-              "For high-stakes medical, legal, mental-health, or financial requests, provide general safety-oriented guidance and encourage qualified help. "
-              f"User profile: {safe_profile}\nUser request: {state['message']}")
+                "Use only supplied user context for claims about the user. State uncertainty plainly; do not fabricate progress, sources, or document content. "
+                "For high-stakes medical, legal, mental-health, or financial requests, provide general safety-oriented guidance and encourage qualified help. "
+                f"User profile: {safe_profile}\nUser request: {state['message']}")
     model = ChatGoogleGenerativeAI(model=settings.gemini_model, google_api_key=settings.gemini_api_key, temperature=0.3)
     response = model.invoke(prompt)
     return {"response": str(response.content), "sources": []}

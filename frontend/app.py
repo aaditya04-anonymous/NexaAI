@@ -9,7 +9,7 @@ st.markdown("""<style>.block-container{max-width:1100px;padding-top:2rem}.nexa-c
 def api(method, path, **kwargs):
     headers = kwargs.pop("headers", {})
     if st.session_state.get("token"): headers["Authorization"] = f"Bearer {st.session_state.token}"
-    response = requests.request(method, f"{API_URL}{path}", headers=headers, timeout=25, **kwargs)
+    response = requests.request(method, f"{API_URL}{path}", headers=headers, timeout=120, **kwargs)
     if response.status_code >= 400: raise RuntimeError(response.json().get("detail", "Request failed"))
     return response.json() if response.content else None
 

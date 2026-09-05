@@ -18,7 +18,7 @@ class Database:
         logger.info("MongoDB connected")
 
     async def create_indexes(self) -> None:
-        assert self.db
+        assert self.db is not None
         await self.db.users.create_index("email", unique=True)
         for collection in ("profiles", "conversations", "messages", "memories", "goals", "tasks", "documents", "document_chunks", "recommendations", "progress_events", "automations"):
             await self.db[collection].create_index([("user_id", 1), ("created_at", -1)])
