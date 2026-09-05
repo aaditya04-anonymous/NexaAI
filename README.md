@@ -1,10 +1,12 @@
 # Nexa — Personal AI Growth Agent
 
-Nexa is a deployable personal-growth workspace built with **FastAPI**, **MongoDB**, **LangGraph/LangChain**, **Google Gemini**, and **Streamlit**. It provides authenticated, isolated user data for profiles, goals, tasks, memories, recommendations, automations, conversations, and progress metrics.
+NexaAI is a deployable **personal AI career and growth agent** built with **FastAPI**, **MongoDB**, **LangGraph/LangChain**, **Google Gemini**, and **Streamlit**. It provides authenticated, isolated user data for career profiles, goal discovery, collaborative roadmaps, time-budgeted daily tasks, memories, recommendations, conversations, and evidence-based progress metrics.
 
 ## Architecture and safety
 
 The frontend calls a typed REST API. Authentication uses Argon2 password hashes and expiring JWTs. Reset tokens are random, hashed before persistence, single-use, and expire via MongoDB TTL. User-owned repository methods scope all reads, updates, and deletes by authenticated `user_id`. The agent graph receives its user identity from the API—not model output—and prompts only receive a minimized profile context. See [architecture](docs/architecture.md).
+
+The connected core is intentionally goal-first: **profile → goal discussion → editable roadmap draft → explicit finalization → daily tasks → completion evidence → progress**. See the incremental [implementation plan](docs/implementation-plan.md).
 
 ## Setup
 
