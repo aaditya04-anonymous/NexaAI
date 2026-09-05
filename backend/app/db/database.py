@@ -20,8 +20,11 @@ class Database:
     async def create_indexes(self) -> None:
         assert self.db is not None
         await self.db.users.create_index("email", unique=True)
-        for collection in ("profiles", "conversations", "messages", "memories", "goals", "tasks", "documents", "document_chunks", "recommendations", "progress_events", "automations"):
+        for collection in ("profiles", "conversations", "messages", "memories", "goals", "tasks", "documents", "document_chunks", "recommendations", "progress_events", "automations", "roadmaps", "roadmap_phases", "goal_discussions", "goal_history", "roadmap_history", "task_history", "learning_content", "learning_history", "assessments", "assessment_attempts", "assessment_history", "news_articles", "notifications", "projects", "user_preferences", "activity_logs", "recommendation_history"):
             await self.db[collection].create_index([("user_id", 1), ("created_at", -1)])
+        await self.db.roadmaps.create_index([("user_id", 1), ("goal_id", 1)], unique=True)
+        await self.db.roadmap_phases.create_index([("user_id", 1), ("roadmap_id", 1), ("order", 1)])
+        await self.db.tasks.create_index([("user_id", 1), ("due_date", 1)])
         await self.db.messages.create_index([("conversation_id", 1), ("created_at", 1)])
         await self.db.password_reset_tokens.create_index("expires_at", expireAfterSeconds=0)
 

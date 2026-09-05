@@ -31,12 +31,34 @@ def authenticate():
                 except RuntimeError as exc: st.error(str(exc))
 
 def dashboard():
-    st.title("Your growth space")
-    try: summary = api("GET", "/progress/summary")
+    st.title("Your career growth command center")
+    st.caption("Your goal, roadmap, daily actions, and evidence of progress stay connected.")
+    try: data = api("GET", "/dashboard")
     except RuntimeError as exc: st.error(str(exc)); return
+    snapshot, today, progress = data["career_snapshot"], data["today"], data["progress"]
     cols = st.columns(3)
-    cols[0].metric("Active goals", summary["active_goals"]); cols[1].metric("Completed tasks", summary["completed_tasks"]); cols[2].metric("Overdue tasks", summary["overdue_tasks"])
-    st.info("Nexa only reports metrics stored in your account. Add goals and tasks to generate useful insights.")
+    cols[0].metric("Career goal", snapshot["goal"]["title"] if snapshot["goal"] else "Set your direction")
+    cols[1].metric("Goal progress", f'{snapshot["progress"]}%')
+    cols[2].metric("Today’s plan", f'{len(today["tasks"])} actions')
+    st.subheader("NexaAI insight")
+    st.info(data["ai_insight"])
+    left, right = st.columns([3, 2])
+    with left:
+        st.subheader("Today's connected plan")
+        if not today["tasks"]:
+            st.caption("Finalize a roadmap, then generate a daily plan based on your available time.")
+        for task in today["tasks"]:
+            st.markdown(f"**{task['title']}** · {task.get('estimated_minutes', 0)} min · {task.get('task_type', 'activity').title()}")
+            st.progress(task.get("completion_percentage", 0))
+    with right:
+        st.subheader("Journey signals")
+        st.metric("Task completion", f'{progress["task_completion_rate"]}%')
+        st.metric("Roadmap completion", f'{progress["roadmap_progress"]}%')
+        phase = snapshot.get("current_phase")
+        st.caption(f"Current phase: {phase['title'] if phase else 'Not set yet'}")
+    if today.get("recommended_action"):
+        st.subheader("Recommended next action")
+        st.write(today["recommended_action"].get("description") or today["recommended_action"]["title"])
 
 def resource_page(name):
     st.title(name)
@@ -54,6 +76,21 @@ def resource_page(name):
         with st.container(border=True):
             st.subheader(item["title"]); st.caption(f"{item.get('status', 'active').title()} · {item.get('priority', 'medium').title()} priority")
             if item.get("description"): st.write(item["description"])
+
+def api_summary_page(title, endpoint, empty_message):
+    st.title(title)
+    try: value = api("GET", endpoint)
+    except RuntimeError as exc: st.error(str(exc)); return
+    if isinstance(value, list):
+        if not value: st.caption(empty_message)
+        for item in value:
+            with st.container(border=True):
+                st.subheader(item.get("title", "NexaAI item"))
+                st.write(item.get("description") or item.get("summary") or item.get("content") or "")
+    elif value.get("status") == "unavailable":
+        st.info(value.get("reason", empty_message))
+    else:
+        st.json(value)
 
 def chat():
     st.title("Chat with Nexa")
@@ -74,8 +111,18 @@ if not st.session_state.get("token"):
 else:
     with st.sidebar:
         st.header("✦ Nexa")
-        page = st.radio("Navigate", ["Overview", "Chat", "Goals", "Tasks", "Memories", "Recommendations"])
+        page = st.radio("Navigate", ["Overview", "Chat", "Goals", "Roadmap", "Today's Tasks", "Today's Learning", "Career Updates", "Recommendations", "Projects", "Progress", "History", "Memories", "Profile / Settings"])
         if st.button("Log out", use_container_width=True): st.session_state.clear(); st.rerun()
     if page == "Overview": dashboard()
     elif page == "Chat": chat()
-    else: resource_page(page)
+    elif page == "Goals": resource_page("Goals")
+    elif page == "Roadmap": api_summary_page(page, "/goals", "Create a goal and discuss it with NexaAI to draft a roadmap.")
+    elif page == "Today's Tasks": api_summary_page(page, "/tasks/today", "No planned tasks for today.")
+    elif page == "Today's Learning": api_summary_page(page, "/learning/today", "Generate learning from a task to begin.")
+    elif page == "Career Updates": api_summary_page(page, "/news/today", "No verified career update is available yet.")
+    elif page == "Recommendations": api_summary_page(page, "/recommendations", "Generate a recommendation from your progress.")
+    elif page == "Projects": api_summary_page(page, "/projects", "No project recommendation yet.")
+    elif page == "Progress": api_summary_page(page, "/progress", "No progress evidence yet.")
+    elif page == "History": api_summary_page(page, "/history", "No history yet.")
+    elif page == "Memories": api_summary_page(page, "/memories", "No saved memories yet.")
+    else: api_summary_page(page, "/users/me", "Complete your career profile to personalize NexaAI.")
