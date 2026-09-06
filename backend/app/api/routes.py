@@ -379,6 +379,20 @@ async def notification_preferences(payload: NotificationPreferenceUpdate, user: 
     return serialize(await get_db().user_preferences.find_one({"user_id": user["id"]}))  # type: ignore[return-value]
 
 
+@router.get("/notifications/preferences", tags=["notifications"])
+async def get_notification_preferences(user: dict = Depends(current_user)) -> dict:
+    preferences = serialize(await get_db().user_preferences.find_one({"user_id": user["id"]}))
+    return preferences or {
+        "enabled": True,
+        "task_reminders": True,
+        "learning_reminders": True,
+        "article_reminders": True,
+        "timezone": "UTC",
+        "learning_time": None,
+        "article_times": [],
+    }
+
+
 @router.get("/notifications", tags=["notifications"])
 async def list_notifications(user: dict = Depends(current_user)) -> list[dict]:
     return await UserOwnedRepository(get_db(), "notifications").list(user["id"])
@@ -480,6 +494,20 @@ async def chat(payload: dict, user: dict = Depends(current_user)) -> dict:
 
 
 router.include_router(resource_router("conversations", "conversations"))
+
+
+@router.get("/conversations/{conversation_id}/messages")
+async def conversation_messages(conversation_id: str, user: dict = Depends(current_user)) -> list[dict]:
+    conversation = await UserOwnedRepository(get_db(), "conversations").get(user["id"], conversation_id)
+    if not conversation:
+        raise HTTPException(404, "Conversation not found")
+    return [
+        serialize(value)
+        async for value in get_db().messages.find(
+            {"user_id": user["id"], "conversation_id": conversation_id}
+        ).sort("created_at", 1)
+    ]
+
 
 @router.get("/documents")
 async def list_documents(user: dict = Depends(current_user)):

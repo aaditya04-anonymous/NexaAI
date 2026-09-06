@@ -1,4 +1,4 @@
-from datetime import date, time
+from datetime import date, time, datetime
 from typing import Literal
 
 from pydantic import BaseModel, Field
@@ -23,6 +23,28 @@ class CareerProfileUpdate(BaseModel):
     memory_enabled: bool | None = None
 
 
+class UserPreferenceUpdate(BaseModel):
+    preferred_learning_time: time | None = None
+    news_time_1: time | None = None
+    news_time_2: time | None = None
+    preferred_days: list[int] = Field(default_factory=list)
+    daily_learning_minutes: int | None = Field(None, ge=15, le=720)
+    preferred_content_type: str | None = Field(None, max_length=100)
+    difficulty_preference: Literal["easy", "medium", "hard"] = "medium"
+    notification_enabled: bool = True
+    email_enabled: bool = True
+    timezone: str = "UTC"
+
+
+class SkillGap(BaseModel):
+    skill_name: str
+    current_level: Literal["none", "beginner", "intermediate", "advanced", "expert"] = "none"
+    required_level: Literal["beginner", "intermediate", "advanced", "expert"]
+    gap: Literal["none", "small", "medium", "large", "critical"]
+    priority: Literal["low", "medium", "high", "critical"]
+    recommendation: str
+
+
 class GoalCreate(BaseModel):
     title: str = Field(min_length=3, max_length=200)
     description: str | None = Field(None, max_length=5000)
@@ -37,7 +59,7 @@ class GoalUpdate(BaseModel):
     description: str | None = Field(None, max_length=5000)
     target_role: str | None = Field(None, max_length=160)
     deadline: date | None = None
-    status: Literal["discovery", "draft", "active", "paused", "completed"] | None = None
+    status: Literal["discovery", "discussion", "draft", "active", "paused", "completed"] | None = None
 
 
 class GoalDiscussionRequest(BaseModel):
@@ -54,11 +76,79 @@ class RoadmapPhaseInput(BaseModel):
 
 class RoadmapUpdate(BaseModel):
     phases: list[RoadmapPhaseInput] = Field(min_length=1, max_length=30)
+    status: Literal["draft", "review", "finalized"] | None = None
 
 
 class TaskCompletion(BaseModel):
     completion_percentage: int = Field(default=100, ge=0, le=100)
     reflection: str | None = Field(None, max_length=2000)
+
+
+class LearningContent(BaseModel):
+    title: str
+    topic: str
+    difficulty: Literal["beginner", "intermediate", "advanced"]
+    sections: list[dict] = Field(default_factory=list)
+    diagrams: list[dict] = Field(default_factory=list)
+    code_examples: list[str] = Field(default_factory=list)
+    exercises: list[dict] = Field(default_factory=list)
+    youtube_resources: list[dict] = Field(default_factory=list)
+    estimated_minutes: int
+
+
+class AssessmentQuestion(BaseModel):
+    type: Literal["mcq", "true_false", "multiple_select", "short_answer", "coding", "scenario", "explanation"]
+    question: str
+    options: list[str] | None = Field(None, max_length=5)
+    correct_answer: str | None = None
+    explanation: str | None = None
+
+
+class AssessmentCreate(BaseModel):
+    topic: str
+    difficulty: Literal["beginner", "intermediate", "advanced"]
+    passing_score: int = Field(default=70, ge=0, le=100)
+    questions: list[AssessmentQuestion] = Field(min_length=1, max_length=20)
+
+
+class AssessmentSubmission(BaseModel):
+    answers: dict[str, str] = Field(min_length=1)
+
+
+class AssessmentFeedback(BaseModel):
+    score: int
+    passed: bool
+    strengths: list[str] = Field(default_factory=list)
+    weaknesses: list[str] = Field(default_factory=list)
+    detailed_feedback: str
+
+
+class NewsArticle(BaseModel):
+    title: str
+    summary: str
+    news_items: list[dict] = Field(default_factory=list)
+    career_impact: str
+    recommended_actions: list[str] = Field(default_factory=list)
+    publication_date: datetime
+
+
+class Recommendation(BaseModel):
+    type: Literal["learn", "revise", "practice", "project", "video", "article", "interview", "portfolio", "network"]
+    title: str
+    description: str
+    reason: str
+    action: str
+    expected_benefit: str
+    priority: Literal["low", "medium", "high", "critical"]
+    relevance_score: float
+
+
+class Memory(BaseModel):
+    type: Literal["preference", "career", "skill", "goal", "learning", "strength", "weakness", "behavior", "project", "decision", "recommendation"]
+    key: str
+    value: str
+    importance: Literal["low", "medium", "high"]
+    confidence: float = Field(ge=0, le=1)
 
 
 class AgentChatRequest(BaseModel):
