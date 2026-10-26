@@ -47,12 +47,19 @@ async def ask_learning_question(learning_id: str, message: str, user: dict = Dep
     if not content:
         raise HTTPException(404, "Learning content not found")
     
-    # TODO: Integrate with AI agent for contextual Q&A
+    from .routes import chat
+    result = await chat({
+        "message": message,
+        "context_type": "learning",
+        "context_id": learning_id,
+        "learning_topic": content.get("topic")
+    }, user)
     return {
         "question": message,
-        "answer": f"Based on {content.get('topic')}, here's an explanation...",
+        "answer": result.get("message"),
         "context": content.get("topic"),
-        "helpful_resources": content.get("youtube_resources", [])
+        "helpful_resources": content.get("youtube_resources", []),
+        "conversation_id": result.get("conversation_id"),
     }
 
 
@@ -64,11 +71,16 @@ async def complete_learning(learning_id: str, user: dict = Depends(current_user)
     
     result = await get_db()["learning_content"].update_one(
         {"_id": ObjectId(learning_id), "user_id": user["id"]},
-        {"$set": {"status": "completed", "completed_at": datetime.now(UTC)}}
+        {"$set": {"status": "completed", "completed_at": datetime.now(UTC), "completion_percentage": 100}}
     )
     
     if result.matched_count == 0:
         raise HTTPException(404, "Learning content not found")
+    
+    await UserOwnedRepository(get_db(), "learning_history").create(user["id"], {
+        "learning_id": learning_id,
+        "event": "lesson_completed",
+    })
     
     return {"success": True, "message": "Learning marked as complete"}
 
@@ -333,36 +345,30 @@ async def get_news_article(article_id: str, user: dict = Depends(current_user)) 
 async def ask_news_question(article_id: str, message: str, user: dict = Depends(current_user)) -> dict:
     """Ask a question about news article (contextual chat)."""
     article = await get_db()["news_articles"].find_one({
-        "_id": ObjectId(article_id),
+        "_id": ObjectId(article_id) if ObjectId.is_valid(article_id) else article_id,
         "user_id": user["id"]
     })
     
     if not article:
         raise HTTPException(404, "Article not found")
     
-    # TODO: Integrate with AI agent for contextual career Q&A
+    from .routes import chat
+    result = await chat({
+        "message": message,
+        "context_type": "news",
+        "context_id": article_id,
+    }, user)
     return {
         "question": message,
-        "answer": f"Based on the article about {article.get('title')}, here's the answer...",
+        "answer": result.get("message"),
         "source": article.get("title"),
-        "relevance_to_goal": "This is relevant to your AI Engineer goal"
+        "conversation_id": result.get("conversation_id"),
     }
 
 
 @router.post("/career/news/{article_id}/add-to-roadmap", tags=["news"])
-async def add_news_to_roadmap(article_id: str, user: dict = Depends(current_user)) -> dict:
+async def add_news_to_roadmap_alias(article_id: str, user: dict = Depends(current_user)) -> dict:
     """Add a news topic to the roadmap."""
-    article = await get_db()["news_articles"].find_one({
-        "_id": ObjectId(article_id),
-        "user_id": user["id"]
-    })
-    
-    if not article:
-        raise HTTPException(404, "Article not found")
-    
-    # TODO: Extract topics and add to roadmap
-    return {
-        "success": True,
-        "message": f"Added topics from '{article.get('title')}' to your roadmap",
-        "topics_added": 3
-    }
+    from .routes import add_news_to_roadmap
+    from ..schemas.career import AddNewsToRoadmapRequest
+    return await add_news_to_roadmap(article_id, AddNewsToRoadmapRequest(), user)

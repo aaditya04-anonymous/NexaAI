@@ -84,6 +84,12 @@ class TaskCompletion(BaseModel):
     reflection: str | None = Field(None, max_length=2000)
 
 
+class AddNewsToRoadmapRequest(BaseModel):
+    topic: str | None = None
+    item_index: int | None = None
+
+
+
 class LearningContent(BaseModel):
     title: str
     topic: str

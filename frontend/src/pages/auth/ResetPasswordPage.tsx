@@ -28,18 +28,22 @@ export function ResetPasswordPage() {
   }
 
   return (
-    <AuthLayout title="Set a new password" subtitle="Paste the token from your reset email.">
+    <AuthLayout title="Set a new password" subtitle="Paste the token from your reset email and pick a strong password.">
       <form onSubmit={onSubmit} className="space-y-4">
         {error && <ErrorNote message={error} />}
         <Field label="Reset token">
-          <Input required value={token} onChange={(e) => setToken(e.target.value)} placeholder="Paste token" />
+          <Input required value={token} onChange={(e) => setToken(e.target.value)} placeholder="Paste verification token" />
         </Field>
         <Field label="New password" hint="At least 12 characters.">
           <Input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••••••" />
         </Field>
-        <Button type="submit" className="w-full" disabled={busy}>{busy ? "Saving…" : "Save new password"}</Button>
-        <p className="text-center text-sm text-ink-soft">
-          <Link to="/login" className="hover:text-ink">Back to sign in</Link>
+        <Button type="submit" className="w-full mt-2" disabled={busy}>
+          {busy ? "Saving…" : "Save new password →"}
+        </Button>
+        <p className="text-center text-xs text-[#666C72]">
+          <Link to="/login" className="font-medium text-[#17191B] hover:underline">
+            ← Back to sign in
+          </Link>
         </p>
       </form>
     </AuthLayout>

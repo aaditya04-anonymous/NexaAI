@@ -4,7 +4,7 @@ import { getApiBase, setApiBase } from "../lib/config";
 import { getNotificationPreferences, updateNotificationPreferences } from "../lib/endpoints";
 import { ApiError } from "../lib/api";
 import type { NotificationPreferences } from "../lib/types";
-import { Button, Card, ErrorNote, Field, Input, PageHeader } from "../components/ui";
+import { Badge, Button, Card, ErrorNote, Field, Input, PageHeader } from "../components/ui";
 
 export function SettingsPage() {
   const [apiUrl, setApiUrl] = useState(getApiBase());
@@ -16,7 +16,9 @@ export function SettingsPage() {
   const [savingPrefs, setSavingPrefs] = useState(false);
 
   useEffect(() => {
-    getNotificationPreferences().then(setPrefs).catch((err) => setPrefsError(err instanceof ApiError ? err.message : "Couldn't load preferences."));
+    getNotificationPreferences()
+      .then(setPrefs)
+      .catch((err) => setPrefsError(err instanceof ApiError ? err.message : "Couldn't load preferences."));
   }, []);
 
   async function onCheck() {
@@ -48,47 +50,114 @@ export function SettingsPage() {
   }
 
   return (
-    <div>
-      <PageHeader eyebrow="Account" title="Settings" description="Connection and notification preferences." />
+    <div className="space-y-8">
+      <PageHeader
+        eyebrow="Configuration"
+        title="Platform & System"
+        pillHighlight="Settings"
+        description="API connection endpoint, AI provider runtime status, and delivery notifications."
+      />
 
-      <Card className="mb-8">
-        <p className="mb-3 font-display text-lg text-ink">Backend connection</p>
-        <form onSubmit={onSaveUrl} className="space-y-3">
-          <Field label="API base URL" hint="Where your NexaAI backend is running">
-            <Input value={apiUrl} onChange={(e) => setApiUrl(e.target.value)} placeholder="http://localhost:8000" />
+      {/* AI Provider Runtime Status Banner */}
+      <Card className="bg-gradient-to-r from-[#E5EEF5]/70 via-white to-[#C9EBC4]/40 border-[#E4E7E8]">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="flex h-2 w-2 rounded-full bg-[#17191B] animate-ping" />
+              <span className="text-xs font-bold uppercase tracking-wider text-[#1b3b5a]">
+                AI Orchestration Architecture
+              </span>
+            </div>
+            <p className="font-display text-xl font-bold text-[#17191B]">
+              Primary: Groq (Llama 3.3) • Resilient Fallback: Google Gemini
+            </p>
+            <p className="text-xs text-[#666C72]">
+              Groq handles real-time generation. In the event of network disruption or rate-limits, Gemini acts as automatic fallback.
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <span className="rounded-full bg-white px-3.5 py-1.5 text-xs font-semibold text-[#17191B] border border-[#E4E7E8] shadow-xs">
+              ⚡ Ultra-Low Latency
+            </span>
+          </div>
+        </div>
+      </Card>
+
+      {/* Backend API Connection */}
+      <Card>
+        <div className="mb-4">
+          <span className="text-xs font-semibold uppercase tracking-wider text-[#1b3b5a]">Infrastructure</span>
+          <h2 className="font-display text-xl font-bold text-[#17191B]">Backend REST API</h2>
+        </div>
+
+        <form onSubmit={onSaveUrl} className="space-y-4">
+          <Field label="API Base URL" hint="Origin host for Nexa Fast API backend">
+            <Input
+              value={apiUrl}
+              onChange={(e) => setApiUrl(e.target.value)}
+              placeholder="http://localhost:8000"
+            />
           </Field>
-          <div className="flex items-center gap-3">
-            <Button type="submit" size="sm">Save & reload</Button>
-            <Button type="button" variant="secondary" size="sm" onClick={onCheck} disabled={checking}>
-              {checking ? "Checking…" : "Check connection"}
+          <div className="flex flex-wrap items-center gap-3">
+            <Button type="submit" size="sm">
+              Save & Reload
             </Button>
-            {status === "ok" && <span className="text-sm text-moss-deep">Connected</span>}
-            {status === "down" && <span className="text-sm text-rose">Not reachable</span>}
+            <Button type="button" variant="secondary" size="sm" onClick={onCheck} disabled={checking}>
+              {checking ? "Probing Health…" : "Probe API Health"}
+            </Button>
+            {status === "ok" && (
+              <Badge tone="mint">Online & Healthy ✓</Badge>
+            )}
+            {status === "down" && (
+              <Badge tone="peach">Service Unreachable</Badge>
+            )}
           </div>
         </form>
       </Card>
 
+      {/* Notifications Preferences */}
       <Card>
-        <p className="mb-3 font-display text-lg text-ink">Notifications</p>
-        {prefsError && <div className="mb-3"><ErrorNote message={prefsError} /></div>}
+        <div className="mb-4">
+          <span className="text-xs font-semibold uppercase tracking-wider text-[#1b3b5a]">Preferences</span>
+          <h2 className="font-display text-xl font-bold text-[#17191B]">Practice Reminders</h2>
+        </div>
+
+        {prefsError && <ErrorNote message={prefsError} />}
+
         {!prefs ? (
-          <p className="text-sm text-ink-soft">Loading…</p>
+          <p className="text-xs text-[#666C72]">Loading notification preferences…</p>
         ) : (
-          <form onSubmit={onSavePrefs} className="space-y-3">
-            {(["enabled", "task_reminders", "learning_reminders", "article_reminders"] as const).map((key) => (
-              <label key={key} className="flex items-center gap-2 text-sm text-ink-soft">
-                <input
-                  type="checkbox"
-                  checked={prefs[key]}
-                  onChange={(e) => setPrefs({ ...prefs, [key]: e.target.checked })}
-                />
-                {key.replace(/_/g, " ")}
-              </label>
-            ))}
-            <Field label="Timezone">
-              <Input value={prefs.timezone} onChange={(e) => setPrefs({ ...prefs, timezone: e.target.value })} />
+          <form onSubmit={onSavePrefs} className="space-y-4">
+            <div className="grid gap-3 sm:grid-cols-2">
+              {(["enabled", "task_reminders", "learning_reminders", "article_reminders"] as const).map((key) => (
+                <label
+                  key={key}
+                  className="flex cursor-pointer items-center gap-3 rounded-2xl border border-[#E4E7E8] p-3 text-xs font-medium text-[#17191B] hover:bg-[#F3F4F2] transition-colors"
+                >
+                  <input
+                    type="checkbox"
+                    checked={prefs[key]}
+                    onChange={(e) => setPrefs({ ...prefs, [key]: e.target.checked })}
+                    className="accent-[#17191B] h-4 w-4 rounded"
+                  />
+                  <span className="capitalize">{key.replace(/_/g, " ")}</span>
+                </label>
+              ))}
+            </div>
+
+            <Field label="Preferred Notification Timezone">
+              <Input
+                value={prefs.timezone}
+                onChange={(e) => setPrefs({ ...prefs, timezone: e.target.value })}
+                placeholder="UTC"
+              />
             </Field>
-            <Button type="submit" size="sm" disabled={savingPrefs}>{savingPrefs ? "Saving…" : "Save preferences"}</Button>
+
+            <div className="flex justify-end pt-2">
+              <Button type="submit" size="sm" disabled={savingPrefs}>
+                {savingPrefs ? "Saving…" : "Save Preferences"}
+              </Button>
+            </div>
           </form>
         )}
       </Card>

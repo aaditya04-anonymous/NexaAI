@@ -2,8 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { useAuth } from "../context/AuthContext";
 import { changePassword, updateCareerProfile } from "../lib/endpoints";
 import { ApiError } from "../lib/api";
-import { Button, Card, ErrorNote, Field, Input, Select, Textarea } from "../components/ui";
-import { PageHeader } from "../components/ui";
+import { Button, Card, ErrorNote, Field, Input, Select, Textarea, PageHeader } from "../components/ui";
 
 function listToText(list?: string[]) { return (list ?? []).join(", "); }
 function textToList(text: string) { return text.split(",").map((s) => s.trim()).filter(Boolean); }
@@ -28,7 +27,9 @@ export function ProfilePage() {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => { setSaved(false); }, [name, profession, currentRole, experienceLevel, currentSkills, targetSkills, interests, learningStyle, learningMinutes, objectives, memoryEnabled]);
+  useEffect(() => {
+    setSaved(false);
+  }, [name, profession, currentRole, experienceLevel, currentSkills, targetSkills, interests, learningStyle, learningMinutes, objectives, memoryEnabled]);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -58,52 +59,128 @@ export function ProfilePage() {
   }
 
   return (
-    <div>
-      <PageHeader eyebrow="Account" title="Profile" description="This context shapes your roadmap, tasks, and recommendations." />
-      <Card>
-        <form onSubmit={onSubmit} className="space-y-5">
-          {error && <ErrorNote message={error} />}
-          {saved && <p className="text-sm text-moss-deep">Saved.</p>}
+    <div className="space-y-8">
+      <PageHeader
+        eyebrow="Context Calibration"
+        title="Career Profile &"
+        pillHighlight="Identity"
+        description="This foundational context calibrates every roadmap phase, daily practice task, and AI coach recommendation."
+      />
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Name"><Input value={name} onChange={(e) => setName(e.target.value)} /></Field>
-            <Field label="Current profession"><Input value={profession} onChange={(e) => setProfession(e.target.value)} /></Field>
-            <Field label="Current role"><Input value={currentRole} onChange={(e) => setCurrentRole(e.target.value)} /></Field>
-            <Field label="Experience level">
+      <Card>
+        <div className="mb-6 flex items-center justify-between border-b border-[#E4E7E8] pb-4">
+          <div>
+            <span className="text-xs font-semibold uppercase tracking-wider text-[#1b3b5a]">Professional Profile</span>
+            <h2 className="font-display text-2xl font-bold text-[#17191B]">Background & Focus Areas</h2>
+          </div>
+          {saved && (
+            <span className="rounded-full bg-[#C9EBC4] px-3.5 py-1 text-xs font-semibold text-[#1c4722]">
+              Changes Saved ✓
+            </span>
+          )}
+        </div>
+
+        <form onSubmit={onSubmit} className="space-y-6">
+          {error && <ErrorNote message={error} />}
+
+          <div className="grid gap-5 sm:grid-cols-2">
+            <Field label="Full Name">
+              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Aaditya" />
+            </Field>
+            <Field label="Target Career Field">
+              <Input value={profession} onChange={(e) => setProfession(e.target.value)} placeholder="AI Engineering" />
+            </Field>
+            <Field label="Current Role">
+              <Input value={currentRole} onChange={(e) => setCurrentRole(e.target.value)} placeholder="Software Engineer" />
+            </Field>
+            <Field label="Experience Seniority">
               <Select value={experienceLevel} onChange={(e) => setExperienceLevel(e.target.value)}>
-                <option value="">Not set</option>
-                <option value="entry">Entry</option>
+                <option value="">Not specified</option>
+                <option value="entry">Entry-Level</option>
                 <option value="junior">Junior</option>
-                <option value="mid">Mid</option>
+                <option value="mid">Mid-Level</option>
                 <option value="senior">Senior</option>
-                <option value="lead">Lead</option>
+                <option value="lead">Lead / Staff</option>
               </Select>
             </Field>
           </div>
 
-          <Field label="Current skills" hint="Comma separated"><Input value={currentSkills} onChange={(e) => setCurrentSkills(e.target.value)} /></Field>
-          <Field label="Target skills" hint="Comma separated"><Input value={targetSkills} onChange={(e) => setTargetSkills(e.target.value)} /></Field>
-          <Field label="Interests" hint="Comma separated"><Input value={interests} onChange={(e) => setInterests(e.target.value)} /></Field>
+          <Field label="Current Skills" hint="Comma-separated competencies you are already proficient in">
+            <Input
+              value={currentSkills}
+              onChange={(e) => setCurrentSkills(e.target.value)}
+              placeholder="Python, FastAPI, Docker, SQL, Git"
+            />
+          </Field>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Preferred learning style"><Input value={learningStyle} onChange={(e) => setLearningStyle(e.target.value)} placeholder="hands-on, video, reading…" /></Field>
-            <Field label="Daily learning minutes"><Input type="number" min={15} max={720} value={learningMinutes} onChange={(e) => setLearningMinutes(Number(e.target.value))} /></Field>
+          <Field label="Target Skills" hint="Comma-separated technologies you are aiming to master">
+            <Input
+              value={targetSkills}
+              onChange={(e) => setTargetSkills(e.target.value)}
+              placeholder="LangChain, LangGraph, RAG, PyTorch, Model Evaluation"
+            />
+          </Field>
+
+          <Field label="Interests & Domain Topics" hint="Comma-separated">
+            <Input
+              value={interests}
+              onChange={(e) => setInterests(e.target.value)}
+              placeholder="Autonomous Agents, Distributed Systems, Multi-modal LLMs"
+            />
+          </Field>
+
+          <div className="grid gap-5 sm:grid-cols-2">
+            <Field label="Preferred Learning Style">
+              <Input
+                value={learningStyle}
+                onChange={(e) => setLearningStyle(e.target.value)}
+                placeholder="Hands-on coding, architecture deep-dives…"
+              />
+            </Field>
+            <Field label="Daily Learning Commitment (Minutes)">
+              <Input
+                type="number"
+                min={15}
+                max={720}
+                value={learningMinutes}
+                onChange={(e) => setLearningMinutes(Number(e.target.value))}
+              />
+            </Field>
           </div>
 
-          <Field label="Career objectives"><Textarea rows={3} value={objectives} onChange={(e) => setObjectives(e.target.value)} /></Field>
+          <Field label="Long-term Career Ambitions">
+            <Textarea
+              rows={3}
+              value={objectives}
+              onChange={(e) => setObjectives(e.target.value)}
+              placeholder="Lead AI engineering initiatives at high-growth teams and deploy real-world LLM systems..."
+            />
+          </Field>
 
-          <label className="flex items-center gap-2 text-sm text-ink-soft">
-            <input type="checkbox" checked={memoryEnabled} onChange={(e) => setMemoryEnabled(e.target.checked)} />
-            Allow Nexa to remember facts about me across conversations
-          </label>
+          <div className="rounded-2xl bg-[#E5EEF5]/40 p-4 border border-[#B7D3E7]/40">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={memoryEnabled}
+                onChange={(e) => setMemoryEnabled(e.target.checked)}
+                className="h-4 w-4 rounded accent-[#17191B]"
+              />
+              <span className="text-xs font-medium text-[#17191B]">
+                Enable Context Memory: Allow Nexa to extract and remember factual constraints across sessions
+              </span>
+            </label>
+          </div>
 
-          <Button type="submit" disabled={saving}>{saving ? "Saving…" : "Save profile"}</Button>
+          <div className="flex justify-end pt-2">
+            <Button type="submit" disabled={saving}>
+              {saving ? "Saving Changes…" : "Save Profile →"}
+            </Button>
+          </div>
         </form>
       </Card>
 
-      <div className="mt-8">
-        <PasswordCard />
-      </div>
+      {/* Security Credentials Card */}
+      <PasswordCard />
     </div>
   );
 }
@@ -134,13 +211,43 @@ function PasswordCard() {
 
   return (
     <Card>
-      <p className="mb-3 font-display text-lg text-ink">Change password</p>
-      <form onSubmit={onSubmit} className="space-y-3">
+      <div className="mb-4">
+        <span className="text-xs font-semibold uppercase tracking-wider text-[#666C72]">Security</span>
+        <h3 className="font-display text-xl font-bold text-[#17191B]">Change Password</h3>
+      </div>
+
+      <form onSubmit={onSubmit} className="space-y-4">
         {error && <ErrorNote message={error} />}
-        {done && <p className="text-sm text-moss-deep">Password updated.</p>}
-        <Field label="Current password"><Input type="password" required value={current} onChange={(e) => setCurrent(e.target.value)} /></Field>
-        <Field label="New password" hint="At least 12 characters"><Input type="password" required value={next} onChange={(e) => setNext(e.target.value)} /></Field>
-        <Button type="submit" size="sm" disabled={busy}>{busy ? "Updating…" : "Update password"}</Button>
+        {done && (
+          <div className="rounded-2xl bg-[#C9EBC4]/30 p-3.5 border border-[#A9DE9C] text-xs font-semibold text-[#1c4722]">
+            Password updated successfully.
+          </div>
+        )}
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Current Password">
+            <Input
+              type="password"
+              required
+              value={current}
+              onChange={(e) => setCurrent(e.target.value)}
+              placeholder="••••••••••••"
+            />
+          </Field>
+          <Field label="New Password" hint="At least 12 characters">
+            <Input
+              type="password"
+              required
+              value={next}
+              onChange={(e) => setNext(e.target.value)}
+              placeholder="••••••••••••"
+            />
+          </Field>
+        </div>
+        <div className="flex justify-end pt-1">
+          <Button type="submit" size="sm" variant="secondary" disabled={busy}>
+            {busy ? "Updating…" : "Update Password"}
+          </Button>
+        </div>
       </form>
     </Card>
   );

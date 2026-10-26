@@ -182,8 +182,10 @@ export interface Recommendation {
   relevance_score?: number;
   kind?: string;
   source?: string;
+  status?: "pending" | "accepted" | "rejected" | "completed" | string;
   created_at?: string;
 }
+
 
 export interface Memory {
   id: string;

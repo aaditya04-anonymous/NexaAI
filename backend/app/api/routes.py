@@ -9,7 +9,7 @@ from ..repositories.base import UserOwnedRepository, serialize
 from ..rag.service import ingest, search
 from ..schemas.auth import ChangePasswordRequest, ForgotPasswordRequest, LoginRequest, RegisterRequest, ResetPasswordRequest, TokenResponse
 from ..schemas.common import ProfileUpdate, ResourceCreate, ResourceUpdate
-from ..schemas.career import AssessmentSubmission, CareerProfileUpdate, ContextChatRequest, GoalCreate, GoalDiscussionRequest, GoalUpdate, MemoryUpdate, NotificationPreferenceUpdate, ProjectCreate, RoadmapUpdate, TaskCompletion
+from ..schemas.career import AddNewsToRoadmapRequest, AssessmentSubmission, CareerProfileUpdate, ContextChatRequest, GoalCreate, GoalDiscussionRequest, GoalUpdate, MemoryUpdate, NotificationPreferenceUpdate, ProjectCreate, RoadmapUpdate, TaskCompletion
 from ..services.career import build_roadmap, calculate_progress, discussion_reply, insight, plan_daily_tasks
 from ..services.loop import build_assessment, build_learning, evaluate_assessment, extract_memories, recommendation, safe_news_query, weekly_report
 from ..core.config import get_settings
@@ -21,7 +21,20 @@ router = APIRouter(prefix="/api")
 
 
 @router.get("/health")
-async def health() -> dict: return {"status": "ok", "service": "nexa-api"}
+async def health() -> dict:
+    settings = get_settings()
+    return {
+        "status": "ok",
+        "service": "nexa-api",
+        "ai": {
+            "primary": "groq",
+            "fallback": "gemini",
+            "groq_configured": bool(settings.groq_api_key),
+            "gemini_configured": bool(settings.gemini_api_key),
+            "groq_model": settings.groq_model,
+            "gemini_model": settings.gemini_model,
+        },
+    }
 
 
 @router.post("/auth/register", response_model=TokenResponse, status_code=201)
@@ -114,6 +127,16 @@ async def discuss_goal(goal_id: str, payload: GoalDiscussionRequest, user: dict 
     reply = discussion_reply(len(answers))
     await discussions.create(user["id"], {"goal_id": goal_id, "role": "assistant", "message": reply})
     return {"discussion": record, "reply": reply, "ready_for_draft": len(answers) + 1 >= 4}
+
+
+@router.get("/goals/{goal_id}/discuss", tags=["goals"])
+async def list_goal_discussions(goal_id: str, user: dict = Depends(current_user)) -> list[dict]:
+    await owned_goal(goal_id, user["id"])
+    discussions = UserOwnedRepository(get_db(), "goal_discussions")
+    prior = await discussions.list(user["id"])
+    goal_turns = [item for item in prior if item.get("goal_id") == goal_id]
+    goal_turns.sort(key=lambda item: str(item.get("created_at", "")))
+    return goal_turns
 
 
 @router.post("/goals/{goal_id}/roadmap/generate", status_code=201, tags=["roadmaps"])
@@ -447,6 +470,71 @@ async def news_chat(article_id: str, payload: ContextChatRequest, user: dict = D
     return await chat({"message": payload.message, "conversation_id": payload.conversation_id, "context_type": "news", "context_id": article_id}, user)
 
 
+@router.post("/news/{article_id}/add-to-roadmap", tags=["news"])
+async def add_news_to_roadmap(article_id: str, payload: AddNewsToRoadmapRequest = AddNewsToRoadmapRequest(), user: dict = Depends(current_user)) -> dict:
+    article = await get_news(article_id, user)
+    db, uid = get_db(), user["id"]
+    
+    roadmap = await db.roadmaps.find_one({"user_id": uid, "status": {"$in": ["active", "finalized", "draft"]}}, sort=[("updated_at", -1)])
+    if not roadmap:
+        goal = await db.goals.find_one({"user_id": uid, "status": "active"}, sort=[("updated_at", -1)])
+        if not goal:
+            goal = await db.goals.find_one({"user_id": uid}, sort=[("updated_at", -1)])
+        if not goal:
+            raise HTTPException(400, "Please create a career goal before adding market trends to your roadmap.")
+        roadmap_repo = UserOwnedRepository(db, "roadmaps")
+        roadmap = await roadmap_repo.create(uid, {"goal_id": str(goal["_id"]), "status": "draft", "version": 1})
+    
+    roadmap_id = str(roadmap.get("id") or roadmap["_id"])
+    goal_id = roadmap.get("goal_id")
+    
+    items = article.get("items", [])
+    selected_item = None
+    if payload.item_index is not None and 0 <= payload.item_index < len(items):
+        selected_item = items[payload.item_index]
+    elif payload.topic:
+        for it in items:
+            if payload.topic.lower() in it.get("title", "").lower():
+                selected_item = it
+                break
+
+    topic_title = payload.topic or (selected_item.get("title") if selected_item else article.get("title", "Market Innovation"))
+    topic_desc = (selected_item.get("recommended_action") or selected_item.get("summary") if selected_item else f"Practical exploration of trends and capabilities identified in {article.get('title')}.")
+    
+    phase_repo = UserOwnedRepository(db, "roadmap_phases")
+    existing_phases = [serialize(p) async for p in db.roadmap_phases.find({"user_id": uid, "roadmap_id": roadmap_id})]
+    next_order = len(existing_phases) + 1
+    
+    new_phase = await phase_repo.create(uid, {
+        "roadmap_id": roadmap_id,
+        "goal_id": goal_id,
+        "order": next_order,
+        "title": f"Market Applied: {topic_title[:60]}",
+        "description": topic_desc[:300],
+        "skills": [topic_title[:40]],
+        "estimated_minutes": 360,
+        "priority": "medium",
+        "status": "not_started",
+        "source": "career_news",
+        "article_id": article_id,
+    })
+    
+    await UserOwnedRepository(db, "roadmap_history").create(uid, {
+        "goal_id": goal_id,
+        "roadmap_id": roadmap_id,
+        "event": "phase_added_from_news",
+        "article_id": article_id,
+        "phase_id": new_phase["id"],
+        "phase_title": new_phase["title"],
+    })
+    
+    return {
+        "success": True,
+        "message": f"Added '{new_phase['title']}' to your roadmap.",
+        "phase": new_phase,
+    }
+
+
 @router.get("/history", tags=["history"])
 async def history(user: dict = Depends(current_user)) -> dict:
     db, uid = get_db(), user["id"]
@@ -486,11 +574,13 @@ async def chat(payload: dict, user: dict = Depends(current_user)) -> dict:
         conversation_id = created["id"]
     elif not await UserOwnedRepository(db, "conversations").get(user["id"], conversation_id):
         raise HTTPException(404, "Conversation not found")
-    messages = UserOwnedRepository(db, "messages")
-    metadata = {"context_type": context_type, "context_id": context_id}
-    await messages.create(user["id"], {"conversation_id": conversation_id, "role": "user", "content": message, **metadata})
-    await messages.create(user["id"], {"conversation_id": conversation_id, "role": "assistant", "content": result["response"], "sources": result.get("sources", []), **metadata})
-    return {"conversation_id": conversation_id, "message": result["response"], "sources": result.get("sources", [])}
+    provider = result.get("provider", "fallback")
+    model = result.get("model", "nexa-internal")
+    metadata = {"context_type": context_type, "context_id": context_id, "provider": provider, "model": model}
+    msg_repo = UserOwnedRepository(db, "messages")
+    await msg_repo.create(user["id"], {"conversation_id": conversation_id, "role": "user", "content": message, **metadata})
+    await msg_repo.create(user["id"], {"conversation_id": conversation_id, "role": "assistant", "content": result["response"], "sources": result.get("sources", []), **metadata})
+    return {"conversation_id": conversation_id, "message": result["response"], "sources": result.get("sources", []), "provider": provider, "model": model}
 
 
 router.include_router(resource_router("conversations", "conversations"))

@@ -1,9 +1,10 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { generateAssessment, getLearning, learningChat, submitAssessment } from "../lib/endpoints";
 import { ApiError } from "../lib/api";
 import type { Assessment, AssessmentAttempt, LearningContent } from "../lib/types";
 import { Badge, Button, Card, ErrorNote, Input, Loader, PageHeader, Textarea } from "../components/ui";
+import { MarkdownContent } from "../components/MarkdownContent";
 
 export function LearningDetailPage() {
   const { id = "" } = useParams();
@@ -17,52 +18,97 @@ export function LearningDetailPage() {
   }, [id]);
 
   if (error) return <ErrorNote message={error} />;
-  if (!lesson) return <Loader label="Opening lesson" />;
+  if (!lesson) return <Loader label="Loading learning module" />;
 
   return (
-    <div>
-      <PageHeader eyebrow={lesson.difficulty} title={lesson.title} description={lesson.topic} />
+    <div className="space-y-8">
+      <PageHeader
+        eyebrow={`Difficulty: ${lesson.difficulty}`}
+        title={lesson.title}
+        description={`Mastery topic: ${lesson.topic} • Estimated completion: ${lesson.estimated_minutes} mins`}
+        action={
+          <Link
+            to="/learning"
+            className="inline-flex items-center gap-1.5 rounded-full border border-[#E4E7E8] bg-white px-4 py-2 text-xs font-semibold uppercase tracking-wider text-[#17191B] hover:border-[#17191B] transition-all"
+          >
+            ← Back to Modules
+          </Link>
+        }
+      />
 
       <div className="space-y-6">
         {lesson.sections?.map((section, idx) => (
-          <Card key={idx}>
-            {section.heading && <p className="font-display text-lg text-ink">{String(section.heading)}</p>}
-            {section.content && <p className="mt-2 whitespace-pre-wrap text-sm text-ink-soft">{String(section.content)}</p>}
+          <Card key={idx} className="space-y-3">
+            {section.heading && (
+              <div className="flex items-center gap-2">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#E5EEF5] text-xs font-bold text-[#1b3b5a]">
+                  {idx + 1}
+                </span>
+                <h3 className="font-display text-xl font-bold text-[#17191B]">
+                  {String(section.heading)}
+                </h3>
+              </div>
+            )}
+            {section.content && (
+              <div className="pt-1">
+                <MarkdownContent content={String(section.content)} />
+              </div>
+            )}
           </Card>
         ))}
 
         {lesson.code_examples?.length > 0 && (
-          <div>
-            <p className="mb-2 font-display text-lg text-ink">Code examples</p>
+          <div className="space-y-3">
+            <h3 className="font-display text-xl font-bold text-[#17191B]">
+              Implementation & Code Examples
+            </h3>
             <div className="space-y-3">
               {lesson.code_examples.map((code, idx) => (
-                <pre key={idx} className="overflow-x-auto rounded-md border border-rule bg-ink px-4 py-3 text-xs text-paper">
-                  <code>{code}</code>
-                </pre>
+                <div key={idx} className="overflow-hidden rounded-2xl border border-[#17191B] bg-[#17191B] shadow-sm">
+                  <div className="flex items-center justify-between border-b border-white/10 px-4 py-2 bg-black/30">
+                    <span className="text-xs font-mono text-white/60">code_example_{idx + 1}.py</span>
+                    <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-white">python</span>
+                  </div>
+                  <pre className="overflow-x-auto p-4 text-xs font-mono text-white/90">
+                    <code>{code}</code>
+                  </pre>
+                </div>
               ))}
             </div>
           </div>
         )}
 
         {lesson.youtube_resources?.length > 0 && (
-          <div>
-            <p className="mb-2 font-display text-lg text-ink">Further watching</p>
-            <ul className="space-y-1.5">
+          <Card className="bg-[#E5EEF5]/40 border-[#B7D3E7]/40">
+            <h3 className="font-display text-lg font-bold text-[#1b3b5a]">
+              Recommended Curated Media
+            </h3>
+            <ul className="mt-3 space-y-2">
               {lesson.youtube_resources.map((r, idx) => (
-                <li key={idx} className="text-sm">
-                  <a href={r.url} target="_blank" rel="noreferrer" className="text-ember-deep hover:underline">{r.title ?? r.url}</a>
+                <li key={idx} className="flex items-center gap-2 text-sm">
+                  <span className="text-red-500">▶</span>
+                  <a
+                    href={r.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-medium text-[#17191B] hover:underline"
+                  >
+                    {r.title ?? r.url}
+                  </a>
                 </li>
               ))}
             </ul>
-          </div>
+          </Card>
         )}
       </div>
 
-      <div className="mt-10 border-t border-rule pt-8">
+      {/* Assessment Section */}
+      <div className="border-t border-[#E4E7E8] pt-8">
         <AssessmentPanel learningId={lesson.id} />
       </div>
 
-      <div className="mt-10 border-t border-rule pt-8">
+      {/* Lesson AI Chat */}
+      <div className="border-t border-[#E4E7E8] pt-8">
         <LessonChat learningId={lesson.id} />
       </div>
     </div>
@@ -107,48 +153,89 @@ function AssessmentPanel({ learningId }: { learningId: string }) {
   }
 
   return (
-    <div>
-      <div className="mb-3 flex items-center justify-between">
-        <p className="font-display text-lg text-ink">Check understanding</p>
-        {!assessment && <Button size="sm" onClick={onStart} disabled={busy}>{busy ? "Preparing…" : "Start assessment"}</Button>}
+    <div className="space-y-5">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <span className="text-xs font-semibold uppercase tracking-wider text-[#1b3b5a]">Milestone Validation</span>
+          <h2 className="font-display text-2xl font-bold text-[#17191B]">Check Understanding</h2>
+        </div>
+        {!assessment && (
+          <Button size="sm" onClick={onStart} disabled={busy}>
+            {busy ? "Formulating Quiz…" : "Start Interactive Assessment →"}
+          </Button>
+        )}
       </div>
 
-      {error && <div className="mb-3"><ErrorNote message={error} /></div>}
+      {error && <ErrorNote message={error} />}
 
       {assessment && !result && (
         <form onSubmit={onSubmit} className="space-y-5">
           {assessment.questions.map((q, idx) => (
-            <Card key={idx}>
-              <p className="text-sm text-ink">{idx + 1}. {q.question}</p>
+            <Card key={idx} className="space-y-3">
+              <p className="font-display text-base font-bold text-[#17191B]">
+                {idx + 1}. {q.question}
+              </p>
               {q.options ? (
-                <div className="mt-2 space-y-1.5">
+                <div className="space-y-2 pt-1">
                   {q.options.map((opt) => (
-                    <label key={opt} className="flex items-center gap-2 text-sm text-ink-soft">
+                    <label
+                      key={opt}
+                      className={`flex cursor-pointer items-center gap-3 rounded-2xl border p-3.5 text-sm transition-all ${
+                        answers[String(idx)] === opt
+                          ? "border-[#17191B] bg-[#E5EEF5] text-[#17191B] font-medium"
+                          : "border-[#E4E7E8] bg-white text-[#666C72] hover:bg-[#F3F4F2]"
+                      }`}
+                    >
                       <input
-                        type="radio" name={`q-${idx}`} value={opt}
+                        type="radio"
+                        name={`q-${idx}`}
+                        value={opt}
+                        checked={answers[String(idx)] === opt}
                         onChange={() => setAnswers((prev) => ({ ...prev, [String(idx)]: opt }))}
+                        className="accent-[#17191B]"
                       />
-                      {opt}
+                      <span>{opt}</span>
                     </label>
                   ))}
                 </div>
               ) : (
-                <Textarea rows={2} className="mt-2" onChange={(e) => setAnswers((prev) => ({ ...prev, [String(idx)]: e.target.value }))} />
+                <Textarea
+                  rows={2}
+                  className="mt-2"
+                  placeholder="Explain your solution or reasoning…"
+                  onChange={(e) => setAnswers((prev) => ({ ...prev, [String(idx)]: e.target.value }))}
+                />
               )}
             </Card>
           ))}
-          <Button type="submit" disabled={busy}>{busy ? "Submitting…" : "Submit answers"}</Button>
+          <Button type="submit" disabled={busy}>
+            {busy ? "Evaluating Answers…" : "Submit Assessment →"}
+          </Button>
         </form>
       )}
 
       {result && (
-        <Card>
+        <Card className={`border ${result.passed ? "border-[#A9DE9C] bg-[#C9EBC4]/30" : "border-peach bg-[#F4D9C6]/30"}`}>
           <div className="flex items-center gap-3">
-            <Badge tone={result.passed ? "moss" : "ember"}>{result.passed ? "Passed" : "Needs another pass"}</Badge>
-            {typeof result.score === "number" && <span className="text-sm text-ink-soft">{result.score}%</span>}
+            <Badge tone={result.passed ? "mint" : "peach"}>
+              {result.passed ? "Passed ✓" : "Needs Revision"}
+            </Badge>
+            {typeof result.score === "number" && (
+              <span className="font-display text-lg font-bold text-[#17191B]">
+                Score: {result.score}%
+              </span>
+            )}
           </div>
-          {result.detailed_feedback && <p className="mt-3 text-sm text-ink-soft">{result.detailed_feedback}</p>}
-          {result.next_action && <p className="mt-2 text-sm text-ink">Next: {result.next_action}</p>}
+          {result.detailed_feedback && (
+            <p className="mt-3 text-sm leading-relaxed text-[#17191B]">
+              {result.detailed_feedback}
+            </p>
+          )}
+          {result.next_action && (
+            <p className="mt-2 text-xs font-semibold uppercase tracking-wider text-[#17191B]">
+              Recommended Next Action: {result.next_action}
+            </p>
+          )}
         </Card>
       )}
     </div>
@@ -182,23 +269,53 @@ function LessonChat({ learningId }: { learningId: string }) {
   }
 
   return (
-    <div>
-      <p className="mb-3 font-display text-lg text-ink">Ask about this lesson</p>
+    <div className="space-y-5">
+      <div>
+        <span className="text-xs font-semibold uppercase tracking-wider text-[#1b3b5a]">Contextual Assistant</span>
+        <h2 className="font-display text-2xl font-bold text-[#17191B]">Ask Questions on this Topic</h2>
+      </div>
+
       {messages.length > 0 && (
-        <div className="mb-3 space-y-3">
+        <Card className="max-h-[400px] overflow-y-auto space-y-4 p-5">
           {messages.map((m, idx) => (
-            <div key={idx} className={m.role === "user" ? "text-right" : ""}>
-              <span className={`inline-block max-w-[85%] rounded-md px-3.5 py-2.5 text-left text-sm ${m.role === "user" ? "bg-ink text-paper" : "bg-surface text-ink"}`}>
-                {m.content}
+            <div
+              key={idx}
+              className={`flex flex-col ${m.role === "user" ? "items-end" : "items-start"}`}
+            >
+              <span className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-[#666C72]">
+                {m.role === "user" ? "You" : "Nexa Tutor"}
               </span>
+              <div
+                className={`max-w-[85%] rounded-3xl p-4 text-sm leading-relaxed ${
+                  m.role === "user"
+                    ? "rounded-br-xs bg-[#17191B] text-white"
+                    : "rounded-bl-xs bg-[#F9FBFC] text-[#17191B] border border-[#E2E8F0]"
+                }`}
+              >
+                {m.role === "user" ? (
+                  <div className="whitespace-pre-wrap">{m.content}</div>
+                ) : (
+                  <MarkdownContent content={m.content} />
+                )}
+              </div>
             </div>
           ))}
-        </div>
+        </Card>
       )}
-      {error && <div className="mb-3"><ErrorNote message={error} /></div>}
-      <form onSubmit={onSubmit} className="flex gap-2">
-        <Input value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Ask a question about this topic…" disabled={busy} />
-        <Button type="submit" disabled={busy || !message.trim()}>Send</Button>
+
+      {error && <ErrorNote message={error} />}
+
+      <form onSubmit={onSubmit} className="flex gap-3">
+        <Input
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          placeholder="Ask for clarification or another code example…"
+          disabled={busy}
+          className="flex-1"
+        />
+        <Button type="submit" disabled={busy || !message.trim()}>
+          Ask Tutor →
+        </Button>
       </form>
     </div>
   );

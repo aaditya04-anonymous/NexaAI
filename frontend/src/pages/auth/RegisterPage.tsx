@@ -37,23 +37,47 @@ export function RegisterPage() {
   }
 
   return (
-    <AuthLayout title="Start your log" subtitle="A career goal, a roadmap, a place to track the work.">
+    <AuthLayout title="Start your career journey" subtitle="Set your target role, generate a tailored roadmap, and log daily progress.">
       <form onSubmit={onSubmit} className="space-y-4">
         {error && <ErrorNote message={error} />}
         <Field label="Email">
-          <Input type="email" required autoFocus value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
+          <Input
+            type="email"
+            required
+            autoFocus
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="you@example.com"
+          />
         </Field>
         <Field label="Password" hint="At least 12 characters.">
-          <Input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••••••" />
+          <Input
+            type="password"
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="••••••••••••"
+          />
         </Field>
         <Field label="Confirm password">
-          <Input type="password" required value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder="••••••••••••" />
+          <Input
+            type="password"
+            required
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
+            placeholder="••••••••••••"
+          />
         </Field>
-        <Button type="submit" className="w-full" disabled={busy}>{busy ? "Creating account…" : "Create account"}</Button>
+        <Button type="submit" className="w-full mt-2" disabled={busy}>
+          {busy ? "Creating account…" : "Create account →"}
+        </Button>
       </form>
-      <p className="mt-8 text-center text-sm text-ink-soft">
-        Already have an account? <Link to="/login" className="text-ember-deep hover:underline">Sign in</Link>
-      </p>
+      <div className="mt-8 border-t border-[#E4E7E8] pt-6 text-center text-xs text-[#666C72]">
+        Already have an account?{" "}
+        <Link to="/login" className="font-semibold text-[#17191B] hover:underline">
+          Sign in
+        </Link>
+      </div>
     </AuthLayout>
   );
 }

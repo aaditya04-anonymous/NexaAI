@@ -30,3 +30,13 @@ def test_progress_is_activity_based():
 def test_goal_discussion_requires_discovery_before_draft():
     assert "motivating" in discussion_reply(0)
     assert "enough context" in discussion_reply(4)
+
+
+def test_goal_discussion_stages():
+    # Tests progression through discovery steps before roadmap preparation
+    assert "motivating" in discussion_reply(0)
+    assert "relevant experience" in discussion_reply(1)
+    assert "time can you realistically learn" in discussion_reply(2)
+    assert "deadline" in discussion_reply(3)
+    assert "enough context to prepare a draft roadmap" in discussion_reply(4)
+

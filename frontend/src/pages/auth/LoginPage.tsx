@@ -31,23 +31,43 @@ export function LoginPage() {
   }
 
   return (
-    <AuthLayout title="Welcome back" subtitle="Pick up your roadmap where you left it.">
-      <form onSubmit={onSubmit} className="space-y-4">
+    <AuthLayout title="Welcome back" subtitle="Pick up your career roadmap right where you left off.">
+      <form onSubmit={onSubmit} className="space-y-5">
         {error && <ErrorNote message={error} />}
-        <Field label="Email">
-          <Input type="email" required autoFocus value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
+        <Field label="Work / Personal Email">
+          <Input
+            type="email"
+            required
+            autoFocus
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="you@example.com"
+          />
         </Field>
         <Field label="Password">
-          <Input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••••••" />
+          <Input
+            type="password"
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="••••••••••••"
+          />
         </Field>
         <div className="flex items-center justify-between pt-1">
-          <Link to="/forgot-password" className="text-sm text-ink-soft hover:text-ink">Forgot password?</Link>
-          <Button type="submit" disabled={busy}>{busy ? "Signing in…" : "Sign in"}</Button>
+          <Link to="/forgot-password" className="text-xs font-medium text-[#666C72] hover:text-[#17191B]">
+            Forgot password?
+          </Link>
+          <Button type="submit" disabled={busy}>
+            {busy ? "Signing in…" : "Sign in →"}
+          </Button>
         </div>
       </form>
-      <p className="mt-8 text-center text-sm text-ink-soft">
-        New here? <Link to="/register" className="text-ember-deep hover:underline">Create an account</Link>
-      </p>
+      <div className="mt-8 border-t border-[#E4E7E8] pt-6 text-center text-xs text-[#666C72]">
+        New to Nexa?{" "}
+        <Link to="/register" className="font-semibold text-[#17191B] hover:underline">
+          Create an account
+        </Link>
+      </div>
     </AuthLayout>
   );
 }

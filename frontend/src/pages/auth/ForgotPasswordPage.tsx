@@ -26,21 +26,36 @@ export function ForgotPasswordPage() {
   }
 
   return (
-    <AuthLayout title="Reset your password" subtitle="We'll email a reset link if the account exists.">
+    <AuthLayout title="Reset your password" subtitle="We'll email a reset verification link if the account exists.">
       {sent ? (
         <div className="space-y-4">
-          <p className="text-sm text-ink-soft">If that account exists, a reset email is on its way. Follow the link there to set a new password.</p>
-          <Link to="/login" className="text-sm text-ember-deep hover:underline">Back to sign in</Link>
+          <div className="rounded-2xl bg-[#E5EEF5] p-5 text-sm text-[#1b3b5a]">
+            If that account exists, a reset email is on its way. Follow the instructions to choose a new password.
+          </div>
+          <Link to="/login" className="inline-block text-xs font-semibold text-[#17191B] hover:underline">
+            ← Back to sign in
+          </Link>
         </div>
       ) : (
-        <form onSubmit={onSubmit} className="space-y-4">
+        <form onSubmit={onSubmit} className="space-y-5">
           {error && <ErrorNote message={error} />}
-          <Field label="Email">
-            <Input type="email" required autoFocus value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
+          <Field label="Account Email">
+            <Input
+              type="email"
+              required
+              autoFocus
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+            />
           </Field>
-          <Button type="submit" className="w-full" disabled={busy}>{busy ? "Sending…" : "Send reset link"}</Button>
-          <p className="text-center text-sm text-ink-soft">
-            <Link to="/login" className="hover:text-ink">Back to sign in</Link>
+          <Button type="submit" className="w-full" disabled={busy}>
+            {busy ? "Sending…" : "Send reset link →"}
+          </Button>
+          <p className="text-center text-xs text-[#666C72]">
+            <Link to="/login" className="font-medium text-[#17191B] hover:underline">
+              ← Back to sign in
+            </Link>
           </p>
         </form>
       )}

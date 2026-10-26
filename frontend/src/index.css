@@ -1,50 +1,355 @@
 @import "tailwindcss";
-@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap");
 
 @theme {
-  --font-display: "Fraunces", serif;
-  --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Plus Jakarta Sans", "DM Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body: "DM Sans", -apple-system, BlinkMacSystemFont, sans-serif;
 
-  --color-paper: #f6f4ee;
-  --color-paper-dim: #efece2;
-  --color-surface: #e8e2d3;
-  --color-ink: #171512;
-  --color-ink-soft: #4a453c;
-  --color-rule: #d9d2bf;
+  /* Prospera-inspired Color Palette */
+  --color-canvas: #F3F4F2;
+  --color-surface: #FFFFFF;
+  --color-surface-dim: #F8F9F8;
+  
+  --color-pastel-blue: #B7D3E7;
+  --color-pale-blue: #E5EEF5;
+  --color-pastel-mint: #C9EBC4;
+  --color-pastel-lavender: #D9DDF5;
+  --color-pastel-peach: #F4D9C6;
+  --color-accent-green: #A9DE9C;
 
-  --color-moss: #3d5c4c;
-  --color-moss-deep: #2b4237;
-  --color-moss-tint: #dfe7e0;
+  --color-ink: #17191B;
+  --color-ink-muted: #666C72;
+  --color-ink-subtle: #9AA0A6;
+  --color-border-subtle: #E4E7E8;
+  --color-border-dark: #17191B;
 
-  --color-ember: #c4501f;
-  --color-ember-deep: #9c3c14;
-  --color-ember-tint: #f3ded2;
-
-  --color-brass: #8c7a5b;
-  --color-brass-tint: #ece6d6;
-
-  --color-rose: #a13b48;
+  /* Radius tokens */
+  --radius-panel: 28px;
+  --radius-card: 22px;
+  --radius-pill: 9999px;
 }
 
-html { color-scheme: light; }
+html {
+  color-scheme: light;
+  scroll-behavior: smooth;
+}
 
 body {
-  background-color: var(--color-paper);
-  color: var(--color-ink);
+  background-color: #F3F4F2;
+  color: #17191B;
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-::selection { background: var(--color-ember-tint); color: var(--color-ember-deep); }
+::selection {
+  background: #E5EEF5;
+  color: #17191B;
+}
 
-* { scrollbar-width: thin; scrollbar-color: var(--color-brass) transparent; }
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #E4E7E8 transparent;
+}
 
-.font-display { font-family: var(--font-display); }
+/* Custom Editorial Utilities */
+.font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+/* Outlined Pill Words (Signature Prospera Aesthetic) */
+.pill-word {
+  display: inline-flex;
+  align-items: center;
+  border: 1.5px solid #17191B;
+  border-radius: 9999px;
+  padding: 0.1em 0.65em;
+  line-height: 1.15;
+  font-weight: 500;
+  vertical-align: middle;
+}
+
+.pill-word-pastel {
+  display: inline-flex;
+  align-items: center;
+  background-color: #E5EEF5;
+  color: #17191B;
+  border-radius: 9999px;
+  padding: 0.1em 0.65em;
+  line-height: 1.15;
+  font-weight: 500;
+  vertical-align: middle;
+}
+
+.pill-word-mint {
+  display: inline-flex;
+  align-items: center;
+  background-color: #C9EBC4;
+  color: #17191B;
+  border-radius: 9999px;
+  padding: 0.1em 0.65em;
+  line-height: 1.15;
+  font-weight: 500;
+  vertical-align: middle;
+}
+
+/* Subtle editorial card shadow */
+.prospera-card {
+  background-color: #FFFFFF;
+  border: 1px solid #E4E7E8;
+  border-radius: 26px;
+  box-shadow: 0 4px 20px -2px rgba(23, 25, 27, 0.03), 0 1px 3px rgba(23, 25, 27, 0.02);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.prospera-card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px -4px rgba(23, 25, 27, 0.07), 0 3px 8px rgba(23, 25, 27, 0.03);
+}
+
+/* Fluid Organic Pastel Shapes (from bottom cards in reference) */
+.organic-blob-1 {
+  border-radius: 42% 58% 70% 30% / 45% 45% 55% 55%;
+}
+
+.organic-blob-2 {
+  border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+}
+
+/* Chat Speech Bubble (as in hero section) */
+.speech-bubble {
+  border-radius: 22px 22px 22px 4px;
+  background: #FFFFFF;
+  box-shadow: 0 4px 18px rgba(23, 25, 27, 0.05);
+}
+
+.speech-bubble-assistant {
+  border-radius: 22px 22px 4px 22px;
+  background: #E5EEF5;
+  box-shadow: 0 4px 18px rgba(23, 25, 27, 0.03);
+}
 
 :focus-visible {
-  outline: 2px solid var(--color-moss);
+  outline: 2px solid #17191B;
   outline-offset: 2px;
-  border-radius: 2px;
+  border-radius: 9999px;
+}
+
+/* ==========================================================================
+   Nexa Rich Markdown Typography
+   ========================================================================== */
+.nexa-markdown {
+  color: #17191B;
+  font-size: 0.925rem;
+  line-height: 1.7;
+}
+
+.nexa-markdown > *:first-child {
+  margin-top: 0 !important;
+}
+
+.nexa-markdown > *:last-child {
+  margin-bottom: 0 !important;
+}
+
+.nexa-markdown h1,
+.nexa-markdown h2,
+.nexa-markdown h3,
+.nexa-markdown h4 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: #111315;
+  letter-spacing: -0.018em;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+  line-height: 1.35;
+}
+
+.nexa-markdown h1 {
+  font-size: 1.25rem;
+  border-bottom: 1px solid #E4E7E8;
+  padding-bottom: 0.4rem;
+}
+
+.nexa-markdown h2 {
+  font-size: 1.15rem;
+  color: #17191B;
+  border-bottom: 1px solid rgba(228, 231, 232, 0.6);
+  padding-bottom: 0.25rem;
+}
+
+.nexa-markdown h3 {
+  font-size: 1.025rem;
+  color: #1b3b5a;
+}
+
+.nexa-markdown h4 {
+  font-size: 0.925rem;
+  color: #2D3748;
+}
+
+.nexa-markdown p {
+  margin-bottom: 0.85rem;
+  color: #2D3748;
+}
+
+.nexa-markdown strong {
+  font-weight: 700;
+  color: #0F1113;
+}
+
+.nexa-markdown em {
+  font-style: italic;
+  color: #4A5568;
+}
+
+.nexa-markdown ul {
+  list-style-type: disc;
+  padding-left: 1.4rem;
+  margin-bottom: 0.85rem;
+}
+
+.nexa-markdown ol {
+  list-style-type: decimal;
+  padding-left: 1.4rem;
+  margin-bottom: 0.85rem;
+}
+
+.nexa-markdown li {
+  margin-bottom: 0.35rem;
+  color: #2D3748;
+  padding-left: 0.2rem;
+}
+
+.nexa-markdown li::marker {
+  color: #1b3b5a;
+  font-weight: bold;
+}
+
+.nexa-markdown hr {
+  margin: 1.25rem 0;
+  border: 0;
+  border-top: 1px solid #E4E7E8;
+}
+
+.nexa-markdown blockquote {
+  margin: 1rem 0;
+  padding: 0.65rem 1rem;
+  background-color: rgba(229, 238, 245, 0.45);
+  border-left: 3.5px solid #1b3b5a;
+  border-radius: 0 14px 14px 0;
+  font-style: italic;
+  color: #2D3748;
+}
+
+.nexa-markdown a {
+  color: #1b3b5a;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font-weight: 600;
+  transition: color 0.15s ease;
+}
+
+.nexa-markdown a:hover {
+  color: #000000;
+}
+
+/* Inline code badge */
+.nexa-markdown code:not(pre code) {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.825em;
+  background-color: #EBF3F8;
+  color: #17191B;
+  padding: 0.15em 0.5em;
+  border-radius: 6px;
+  border: 1px solid rgba(183, 211, 231, 0.7);
+  font-weight: 600;
+}
+
+/* Code block container */
+.nexa-code-container {
+  margin: 1.1rem 0;
+  border-radius: 18px;
+  overflow: hidden;
+  background: #111315;
+  border: 1px solid #282C30;
+  box-shadow: 0 6px 20px -3px rgba(0, 0, 0, 0.15);
+}
+
+.nexa-code-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.55rem 1rem;
+  background: #17191B;
+  border-bottom: 1px solid #282C30;
+}
+
+.nexa-code-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: #24282C;
+  color: #E2E8F0;
+  border: 1px solid #383E44;
+  padding: 0.25rem 0.65rem;
+  border-radius: 9999px;
+  font-size: 0.725rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.nexa-code-copy-btn:hover {
+  background: #33383E;
+  color: #FFFFFF;
+  border-color: #4A5158;
+}
+
+.nexa-code-pre {
+  margin: 0;
+  padding: 1rem 1.25rem;
+  overflow-x: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.825rem;
+  line-height: 1.65;
+  color: #E5EEF5;
+}
+
+/* Markdown Table */
+.nexa-markdown table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin: 1.15rem 0;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid #E4E7E8;
+  font-size: 0.85rem;
+  background: #FFFFFF;
+}
+
+.nexa-markdown th {
+  background-color: #F8F9F8;
+  color: #17191B;
+  font-weight: 700;
+  text-align: left;
+  padding: 0.7rem 1rem;
+  border-bottom: 1px solid #E4E7E8;
+}
+
+.nexa-markdown td {
+  padding: 0.7rem 1rem;
+  border-bottom: 1px solid #E4E7E8;
+  color: #4A5568;
+}
+
+.nexa-markdown tr:last-child td {
+  border-bottom: none;
+}
+
+.nexa-markdown tr:nth-child(even) td {
+  background-color: rgba(248, 249, 248, 0.5);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -53,14 +358,4 @@ body {
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
   }
-}
-
-.trail-line {
-  background: repeating-linear-gradient(
-    to bottom,
-    var(--color-rule) 0,
-    var(--color-rule) 4px,
-    transparent 4px,
-    transparent 9px
-  );
 }

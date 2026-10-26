@@ -34,7 +34,7 @@ export const listGoals = () => api.get<Goal[]>("/api/goals");
 export const getGoal = (id: string) => api.get<Goal>(`/api/goals/${id}`);
 export const updateGoal = (id: string, payload: Partial<Goal>) => api.put<Goal>(`/api/goals/${id}`, payload);
 export const discussGoal = (id: string, message: string) => api.post<DiscussResponse>(`/api/goals/${id}/discuss`, { message });
-export const listDiscussion = (_id: string): Discussion[] => []; // no list endpoint exposed; discussions returned inline via discuss()
+export const listDiscussion = (id: string) => api.get<Discussion[]>(`/api/goals/${id}/discuss`);
 
 // -- Roadmaps --------------------------------------------------------------
 export const generateRoadmap = (goalId: string) => api.post<Roadmap>(`/api/goals/${goalId}/roadmap/generate`);
@@ -65,6 +65,8 @@ export const getTodaysNews = () => api.get<NewsArticle>("/api/news/today");
 export const getNews = (id: string) => api.get<NewsArticle>(`/api/news/${id}`);
 export const newsChat = (articleId: string, message: string, conversation_id?: string) =>
   api.post<ChatResponse>(`/api/news/${articleId}/chat`, { message, conversation_id });
+export const addNewsToRoadmap = (articleId: string, topic?: string, item_index?: number) =>
+  api.post<{ success: boolean; message: string; phase: RoadmapPhase }>(`/api/news/${articleId}/add-to-roadmap`, { topic, item_index });
 
 // -- History / reports / progress / dashboard -------------------------------
 export const getHistory = () => api.get<HistoryBundle>("/api/history");
@@ -81,6 +83,9 @@ export const getConversationMessages = (id: string) => api.get<import("./types")
 // -- Recommendations -----------------------------------------------------
 export const listRecommendations = () => api.get<Recommendation[]>("/api/recommendations");
 export const generateRecommendation = () => api.post<Recommendation>("/api/recommendations/generate");
+export const acceptRecommendation = (id: string) => api.post<Recommendation>(`/api/recommendations/${id}/accept`);
+export const rejectRecommendation = (id: string) => api.post<Recommendation>(`/api/recommendations/${id}/reject`);
+export const completeRecommendation = (id: string) => api.post<Recommendation>(`/api/recommendations/${id}/complete`);
 
 // -- Memories --------------------------------------------------------------
 export const extractMemories = (content: string, category: string) => api.post<Memory[]>("/api/memories/extract", { content, category });
